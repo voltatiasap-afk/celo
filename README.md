@@ -1,7 +1,7 @@
 # celo
 This is a tool for steganography, you can hide bitmap images and text inside other bitmap images.
 
-## Usage::
+## Usage:
 ```bash
 Usage: celo <COMMAND>
 
