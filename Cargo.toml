@@ -3,7 +3,7 @@ name = "celo"
 version = "0.1.0"
 edition = "2024"
 description = "BMP Steganography tool"
-license = "None"
+license = "MIT"
 repository = "https://github.com/voltatiasap-afk/celo"
 
 [[bin]]
