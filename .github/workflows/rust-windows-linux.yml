@@ -1,4 +1,4 @@
-name: Build Stego CLI
+name: Build celo CLI
 on:
   push:
     branches: [main]
