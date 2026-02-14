@@ -18,3 +18,8 @@ Options:
 ```
 cargo build --release
 ```
+
+## Installation
+```
+cargo install celo
+```
