@@ -11,6 +11,7 @@ pub struct Cli {
 pub enum Commands {
     Image(ImageArgs),
     Text(TextArgs),
+    File(FileArgs),
 }
 
 #[derive(clap::Args)]
@@ -20,7 +21,28 @@ pub struct ImageArgs {
     #[arg(short, long, default_value = "output.png")]
     pub output: String,
 }
+#[derive(clap::Args)]
+pub struct FileArgs {
+    #[command(subcommand)]
+    pub action: FileAction,
+    #[arg(short, long)]
+    pub output: String,
+}
 
+#[derive(Subcommand)]
+pub enum FileAction {
+    Encode {
+        #[arg(short, long)]
+        mask: String,
+        #[arg(short, long)]
+        file: String,
+    },
+
+    Decode {
+        #[arg(short, long)]
+        input: String,
+    },
+}
 #[derive(Subcommand)]
 pub enum ImageAction {
     Encode {

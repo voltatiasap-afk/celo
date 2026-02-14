@@ -1,6 +1,6 @@
 mod cli;
 
-use anyhow::{Ok, Result};
+use anyhow::{Ok, Result, anyhow};
 use clap::Parser;
 use cli::{Cli, Commands};
 use colored::Colorize;
@@ -37,6 +37,16 @@ fn main() -> Result<()> {
             }
             cli::TextAction::Decode { image } => {
                 text_decode(image)?;
+                Ok(())
+            }
+        },
+        Commands::File(args) => match args.action {
+            cli::FileAction::Encode { mask, file } => {
+                file_encode(mask, file, args.output)?;
+                Ok(())
+            }
+            cli::FileAction::Decode { input } => {
+                file_decode(input, args.output)?;
                 Ok(())
             }
         },
@@ -81,7 +91,7 @@ fn img_encode(main_image: String, payload_image: String, path: String, bits: u8)
         let target_b = (b1 & !mask) | low_b;
 
         if (x, y) == (0, 0) {
-            output.put_pixel(x, y, Rgb([r, bits, b]))
+            output.put_pixel(x, y, Rgb([r1, bits, b1]))
         } else {
             output.put_pixel(x, y, Rgb([target_r, target_g, target_b]));
         }
@@ -126,6 +136,10 @@ fn text_encode(image: String, text: String, path: String) -> Result<()> {
 
     let mut output: RgbImage = ImageBuffer::new(img.width(), img.height());
 
+    if text_bytes.len() as u32 >= (img.width() * img.height()) {
+        println!("{}", "Your text is too big for this image".red().italic());
+        return Err(anyhow!("too_big"));
+    }
     let mut curr_pixel = 0;
     for (x, y, pixel) in img.enumerate_pixels() {
         if curr_pixel >= text_bytes.len() {
@@ -177,6 +191,92 @@ fn text_decode(image: String) -> Result<()> {
     let decoded = String::from_utf8_lossy(&text_bytes);
 
     println!("Decoded: {}", decoded.blue());
+
+    Ok(())
+}
+
+fn file_encode(image: String, file: String, path: String) -> Result<()> {
+    let file = std::fs::read(file)?;
+    let mut img = open(image)?.to_rgb8();
+
+    let mut curr_byte = 0;
+    let mut curr_half: u8 = 0;
+
+    if (file.len() * 2) as u32 >= (img.width() * img.height()) {
+        println!("{}", "Your file is too big for this image".red().italic());
+        return Err(anyhow!("too_big"));
+    }
+
+    for (_, _, pixel) in img.enumerate_pixels_mut() {
+        let Rgb([r, g, b]) = *pixel;
+        if curr_byte >= file.len() {
+            *pixel = Rgb([33, 33, 33]);
+            break;
+        }
+
+        let target_r: u8;
+        let target_b: u8;
+
+        match curr_half {
+            0 => {
+                target_r = (r & 0xFC) | (file[curr_byte] & 0x03);
+                target_b = (b & 0xFC) | ((file[curr_byte] & 0x0C) >> 2);
+                curr_half += 1;
+            }
+            1 => {
+                target_r = (r & 0xFC) | ((file[curr_byte] & 0x30) >> 4);
+                target_b = (b & 0xFC) | ((file[curr_byte] & 0xC0) >> 6);
+                curr_half = 0;
+                curr_byte += 1;
+            }
+
+            _ => {
+                unreachable!();
+            }
+        }
+
+        *pixel = Rgb([target_r, g, target_b])
+    }
+
+    img.save(path)?;
+
+    Ok(())
+}
+
+fn file_decode(image: String, path: String) -> Result<()> {
+    let img = open(image)?.to_rgb8();
+    let mut output: Vec<u8> = Vec::new();
+
+    let mut curr_byte: u8 = 0;
+    let mut curr_half = 0;
+    for (_, _, pixel) in img.enumerate_pixels() {
+        let Rgb([r, g, b]) = *pixel;
+
+        if (r, g, b) == (33, 33, 33) {
+            break;
+        }
+
+        if curr_half == 0 {
+            let low = r & 0x03;
+            let top = b & 0x03;
+            let low_half = (top << 2) | low;
+            curr_byte = low_half;
+
+            curr_half += 1;
+        } else if curr_half == 1 {
+            let low = r & 0x03;
+            let top = b & 0x03;
+
+            curr_byte = ((top << 6) | (low << 4)) | curr_byte;
+
+            output.push(curr_byte);
+
+            curr_byte = 0;
+            curr_half = 0;
+        }
+    }
+
+    std::fs::write(path, output)?;
 
     Ok(())
 }
