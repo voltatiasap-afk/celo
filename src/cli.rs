@@ -17,12 +17,11 @@ pub enum Commands {
 pub struct ImageArgs {
     #[command(subcommand)]
     pub action: ImageAction,
-
-    #[arg(short, long)]
-    pub input: Option<String>,
-
-    #[arg(short, long)]
-    pub output: Option<String>,
+    // #[arg(short, long)]
+    // pub input: Option<String>,
+    //
+    // #[arg(short, long)]
+    // pub output: Option<String>,
 }
 
 #[derive(Subcommand)]
