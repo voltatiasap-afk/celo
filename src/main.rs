@@ -13,18 +13,22 @@ fn main() -> Result<()> {
     match cli.commands {
         Commands::Image(args) => match args.action {
             cli::ImageAction::Encode { main, payload } => {
-                img_encode(main, payload)?;
+                img_encode(main, payload, args.output)?;
                 Ok(())
             }
 
             cli::ImageAction::Decode { input } => {
-                img_decode(input)?;
+                img_decode(input, args.output)?;
                 Ok(())
             }
         },
         Commands::Text(args) => match args.action {
-            cli::TextAction::Encode { text, image } => {
-                text_encode(image, text)?;
+            cli::TextAction::Encode {
+                text,
+                image,
+                output,
+            } => {
+                text_encode(image, text, output)?;
                 Ok(())
             }
             cli::TextAction::Decode { image } => {
@@ -35,7 +39,7 @@ fn main() -> Result<()> {
     }
 }
 
-fn img_encode(main_image: String, payload_image: String) -> Result<()> {
+fn img_encode(main_image: String, payload_image: String, path: String) -> Result<()> {
     let img_1 = open(main_image)?.to_rgb8();
     let mut img_2 = open(payload_image)?.to_rgb8();
 
@@ -72,14 +76,13 @@ fn img_encode(main_image: String, payload_image: String) -> Result<()> {
         output.put_pixel(x, y, Rgb([target_r, target_g, target_b]));
     }
 
-    output.save("merged_images.bmp")?;
-    let message = "Saved to merged_images.bmp";
-    println!("{}", message.blue().italic());
+    output.save(&path)?;
+    println!("Saved to {}", path.blue());
 
     return Ok(());
 }
 
-fn img_decode(image: String) -> Result<()> {
+fn img_decode(image: String, path: String) -> Result<()> {
     let img = open(image)?.to_rgb8();
 
     let mut output: RgbImage = ImageBuffer::new(img.width(), img.height());
@@ -92,13 +95,13 @@ fn img_decode(image: String) -> Result<()> {
         output.put_pixel(x, y, Rgb([r_low, g_low, b_low]));
     }
 
-    output.save("decoded_image.bmp")?;
-    println!("{}", "Saved to decoded_image.bmp".blue());
+    output.save(&path)?;
+    println!("Saved to {}", path.blue());
 
     Ok(())
 }
 
-fn text_encode(image: String, text: String) -> Result<()> {
+fn text_encode(image: String, text: String, path: String) -> Result<()> {
     let img = open(image)?.to_rgb8();
     let text_bytes = text.as_bytes();
 
@@ -127,8 +130,8 @@ fn text_encode(image: String, text: String) -> Result<()> {
         curr_pixel += 1;
     }
 
-    output.save("text_encoded.bmp")?;
-    println!("{}", "Saved to text_encoded.bmp".blue().italic());
+    output.save(&path)?;
+    println!("Saved to {}", path.blue());
     Ok(())
 }
 

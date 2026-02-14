@@ -17,11 +17,8 @@ pub enum Commands {
 pub struct ImageArgs {
     #[command(subcommand)]
     pub action: ImageAction,
-    // #[arg(short, long)]
-    // pub input: Option<String>,
-    //
-    // #[arg(short, long)]
-    // pub output: Option<String>,
+    #[arg(short, long, default_value = "output.png")]
+    pub output: String,
 }
 
 #[derive(Subcommand)]
@@ -52,6 +49,8 @@ pub enum TextAction {
         text: String,
         #[arg(short, long)]
         image: String,
+        #[arg(short, long, default_value = "output.png")]
+        output: String,
     },
 
     Decode {
