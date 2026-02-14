@@ -28,6 +28,8 @@ pub enum ImageAction {
         main: String,
         #[arg(short, long)]
         payload: String,
+        #[arg(short, long, default_value = "2")]
+        depth: u8,
     },
 
     Decode {

@@ -12,8 +12,12 @@ fn main() -> Result<()> {
 
     match cli.commands {
         Commands::Image(args) => match args.action {
-            cli::ImageAction::Encode { main, payload } => {
-                img_encode(main, payload, args.output)?;
+            cli::ImageAction::Encode {
+                main,
+                payload,
+                depth,
+            } => {
+                img_encode(main, payload, args.output, depth)?;
                 Ok(())
             }
 
@@ -39,7 +43,7 @@ fn main() -> Result<()> {
     }
 }
 
-fn img_encode(main_image: String, payload_image: String, path: String) -> Result<()> {
+fn img_encode(main_image: String, payload_image: String, path: String, bits: u8) -> Result<()> {
     let img_1 = open(main_image)?.to_rgb8();
     let mut img_2 = open(payload_image)?.to_rgb8();
 
@@ -61,19 +65,26 @@ fn img_encode(main_image: String, payload_image: String, path: String) -> Result
         );
     }
 
+    let shift = 8 - bits;
+    let mask = (1u8 << bits) - 1;
+
     for (x, y, pixel) in img_2.enumerate_pixels() {
         let Rgb([r, g, b]) = *pixel;
         let Rgb([r1, g1, b1]) = *img_1.get_pixel(x, y);
 
-        let low_r = (0xF0 & r) >> 4;
-        let low_g = (0xF0 & g) >> 4;
-        let low_b = (0xF0 & b) >> 4;
+        let low_r = (r >> shift) & mask;
+        let low_g = (g >> shift) & mask;
+        let low_b = (b >> shift) & mask;
 
-        let target_r = (r1 & 0xF0) | low_r;
-        let target_g = (g1 & 0xF0) | low_g;
-        let target_b = (b1 & 0xF0) | low_b;
+        let target_r = (r1 & !mask) | low_r;
+        let target_g = (g1 & !mask) | low_g;
+        let target_b = (b1 & !mask) | low_b;
 
-        output.put_pixel(x, y, Rgb([target_r, target_g, target_b]));
+        if (x, y) == (0, 0) {
+            output.put_pixel(x, y, Rgb([r, bits, b]))
+        } else {
+            output.put_pixel(x, y, Rgb([target_r, target_g, target_b]));
+        }
     }
 
     output.save(&path)?;
@@ -87,10 +98,18 @@ fn img_decode(image: String, path: String) -> Result<()> {
 
     let mut output: RgbImage = ImageBuffer::new(img.width(), img.height());
 
+    let Rgb([_, bits, _]) = img.get_pixel(0, 0);
+
+    let mask = (1u8 << bits) - 1;
+
     for (x, y, pixel) in img.enumerate_pixels() {
         let Rgb([r, g, b]) = *pixel;
 
-        let Rgb([r_low, g_low, b_low]) = Rgb([(r & 0x0F) << 4, (g & 0x0F) << 4, (b & 0x0F) << 4]);
+        let Rgb([r_low, g_low, b_low]) = Rgb([
+            (r & mask) << (8 - bits),
+            (g & mask) << (8 - bits),
+            (b & mask) << (8 - bits),
+        ]);
 
         output.put_pixel(x, y, Rgb([r_low, g_low, b_low]));
     }
