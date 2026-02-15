@@ -1,6 +1,6 @@
 [package]
 name = "celo"
-version = "0.4"
+version = "0.4.0"
 edition = "2024"
 description = "BMP Steganography tool"
 license = "MIT"
