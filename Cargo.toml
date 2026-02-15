@@ -1,6 +1,6 @@
 [package]
 name = "celo"
-version = "0.3.0"
+version = "0.3.01"
 edition = "2024"
 description = "BMP Steganography tool"
 license = "MIT"
@@ -12,6 +12,6 @@ path = "src/main.rs"
 
 [dependencies]
 anyhow = "1.0.101"
-clap = { version = "4.5.58", features = ["derive"] }
+clap = { version = "4.5.58", features = ["derive", "cargo"] }
 colored = "3.1.1"
 image = "0.25.9"

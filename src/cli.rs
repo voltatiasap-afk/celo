@@ -1,7 +1,7 @@
 use clap::{Parser, Subcommand};
 
 #[derive(Parser)]
-#[command(name = "secret-image")]
+#[command(version)]
 pub struct Cli {
     #[command(subcommand)]
     pub commands: Commands,

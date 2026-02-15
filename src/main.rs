@@ -238,7 +238,8 @@ fn file_encode(image: String, file: String, path: String) -> Result<()> {
         *pixel = Rgb([target_r, g, target_b])
     }
 
-    img.save(path)?;
+    img.save(&path)?;
+    println!("Saved file to {}", path.blue());
 
     Ok(())
 }
@@ -276,7 +277,8 @@ fn file_decode(image: String, path: String) -> Result<()> {
         }
     }
 
-    std::fs::write(path, output)?;
+    std::fs::write(&path, output)?;
+    println!("Saved file to {}", path.blue());
 
     Ok(())
 }
